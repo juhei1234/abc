@@ -49,3 +49,10 @@ cd frontend
 npm install
 npm run dev
 ```
+
+## Fallback interactive preview
+If dependency installation is blocked in your environment, run:
+```bash
+python -m http.server 4173 -d preview
+```
+Then open `http://localhost:4173` for an interactive UI prototype.

@@ -1,0 +1,93 @@
+<!-- ABOUTME: Self-contained interactive preview page for the earnings platform UI and workflows. -->
+<!-- ABOUTME: Enables browser-based validation when full Next.js/FastAPI stack cannot run locally. -->
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Earnings Platform Preview</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background:#f7f8fa; color:#111827; }
+    .container { max-width:1200px; margin:0 auto; padding:16px; }
+    .grid { display:grid; gap:12px; grid-template-columns:2fr 1fr 1fr; }
+    .card { background:#fff; border:1px solid #ddd; border-radius:12px; padding:12px; }
+    table { width:100%; border-collapse:collapse; }
+    th,td{ border-bottom:1px solid #e5e7eb; padding:6px; text-align:left; }
+    button { cursor:pointer; }
+    @media (max-width: 980px) { .grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1>Earnings Calendar & Portfolio Analytics (Interactive Preview)</h1>
+    <div class="grid">
+      <section class="card">
+        <h2>Earnings Calendar</h2>
+        <label>Index
+          <select id="indexSelect">
+            <option value="sp500">S&P 500</option>
+            <option value="nasdaq100">NASDAQ-100</option>
+            <option value="dow30">Dow 30</option>
+          </select>
+        </label>
+        <table><thead><tr><th>Date</th><th>Ticker</th><th>EPS Est</th></tr></thead><tbody id="calendar"></tbody></table>
+      </section>
+      <section class="card">
+        <h2 id="tickerTitle">AAPL Overview</h2>
+        <div id="overview"></div>
+      </section>
+      <section class="card">
+        <h2>Scenario</h2>
+        <label>Yield bps <input id="yield" type="number" value="-25"></label><br>
+        <label>Fed bps <input id="fed" type="number" value="-25"></label><br>
+        <label>Inflation bps <input id="infl" type="number" value="10"></label><br>
+        <label>Sector shock % <input id="sector" type="number" value="4"></label>
+        <button id="runScenario">Run</button>
+        <div id="scenario"></div>
+      </section>
+    </div>
+  </main>
+<script>
+const samples = {
+  sp500:[['2026-04-06','AAPL',1.56],['2026-04-07','MSFT',2.34],['2026-04-10','JPM',3.11]],
+  nasdaq100:[['2026-04-06','NVDA',0.74],['2026-04-09','META',4.01],['2026-04-10','TSLA',0.61]],
+  dow30:[['2026-04-07','V',2.12],['2026-04-11','GS',8.71],['2026-04-12','UNH',6.34]]
+};
+const profile = {
+  AAPL:{pe:26.3,fpe:22.8,ps:7.4,pb:11.2,ev:19.1,buy:32,hold:8,sell:2,target:'140 / 175 / 210'},
+  MSFT:{pe:34.1,fpe:29.4,ps:12.8,pb:10.4,ev:22.9,buy:41,hold:5,sell:1,target:'360 / 420 / 490'},
+  NVDA:{pe:52.2,fpe:33.0,ps:22.5,pb:42.8,ev:38.2,buy:47,hold:6,sell:0,target:'840 / 980 / 1150'}
+};
+function renderCalendar(index){
+  const tbody=document.getElementById('calendar'); tbody.innerHTML='';
+  for(const row of samples[index]){
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${row[0]}</td><td><button data-ticker="${row[1]}">${row[1]}</button></td><td>${row[2]}</td>`;
+    tbody.appendChild(tr);
+  }
+  tbody.querySelectorAll('button').forEach(btn=>btn.onclick=()=>renderOverview(btn.dataset.ticker));
+}
+function renderOverview(ticker){
+  const d = profile[ticker] || profile.AAPL;
+  document.getElementById('tickerTitle').textContent = `${ticker} Overview`;
+  document.getElementById('overview').innerHTML =
+    `<p>P/E ${d.pe} · Fwd P/E ${d.fpe} · P/S ${d.ps} · P/B ${d.pb} · EV/EBITDA ${d.ev}</p>
+     <p>Ratings Buy/Hold/Sell: ${d.buy}/${d.hold}/${d.sell}</p>
+     <p>Target low/mean/high: ${d.target}</p>`;
+}
+function runScenario(){
+  const y=Number(document.getElementById('yield').value);
+  const f=Number(document.getElementById('fed').value);
+  const i=Number(document.getElementById('infl').value);
+  const s=Number(document.getElementById('sector').value);
+  const projected=(-0.02*(y/100)-0.015*(f/100)-0.01*(i/100)+s/100)*100;
+  const vol=12+Math.abs(f)*0.01;
+  document.getElementById('scenario').innerHTML=
+    `<p>Projected Return: ${projected.toFixed(2)}%</p><p>VaR95: ${(1.65*vol).toFixed(2)}%</p><p>Sharpe: ${(projected/vol).toFixed(2)}</p>`;
+}
+document.getElementById('indexSelect').onchange=(e)=>renderCalendar(e.target.value);
+document.getElementById('runScenario').onclick=runScenario;
+renderCalendar('sp500'); renderOverview('AAPL'); runScenario();
+</script>
+</body>
+</html>

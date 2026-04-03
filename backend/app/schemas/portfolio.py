@@ -1,6 +1,6 @@
 # ABOUTME: Pydantic schemas for portfolio CRUD, holdings, and analytics outputs.
 # ABOUTME: Defines typed API contracts used by frontend portfolio workflows.
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class HoldingIn(BaseModel):
@@ -11,7 +11,7 @@ class HoldingIn(BaseModel):
 class PortfolioCreate(BaseModel):
     name: str
     benchmark: str = "SPY"
-    holdings: list[HoldingIn] = []
+    holdings: list[HoldingIn] = Field(default_factory=list)
 
 
 class PortfolioOut(BaseModel):
@@ -26,7 +26,7 @@ class ScenarioRequest(BaseModel):
     treasury_yield_change_bps: float = 0.0
     fed_rate_change_bps: float = 0.0
     inflation_change_bps: float = 0.0
-    sector_shocks: dict[str, float] = {}
+    sector_shocks: dict[str, float] = Field(default_factory=dict)
 
 
 class ScenarioResponse(BaseModel):
